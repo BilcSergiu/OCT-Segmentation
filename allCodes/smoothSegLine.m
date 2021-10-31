@@ -1,0 +1,31 @@
+function [pathX, pathY]=smoothSegLine(pathX,pathY,smoothPara)
+
+fitresult = createFit0(pathY,pathX,smoothPara);
+pathY = pathY(1):1:pathY(end);
+pathX = fitresult(pathY);
+pathX = pathX';
+
+
+function fitresult = createFit0(xs, ys, smoothPara)
+% Fit: 
+% close all
+[xData, yData] = prepareCurveData( xs, ys );
+
+% Set up fittype and options.
+ft = fittype( 'smoothingspline' );
+opts = fitoptions( 'Method', 'SmoothingSpline' );
+opts.SmoothingParam = smoothPara;
+
+% Fit model to data.
+fitresult = fit( xData, yData, ft, opts );
+
+% % Plot fit with data.
+% figure( 'Name', 'untitled fit 2' );
+% h = plot( fitresult, xData, yData );
+% legend( h, 'ys vs. xs', 'untitled fit 2', 'Location', 'NorthEast' );
+% % Label axes
+% xlabel xs
+% ylabel ys
+% grid on
+% 
+
