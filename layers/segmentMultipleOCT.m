@@ -50,8 +50,8 @@ img = double(bwImg .* img0);
 
 gradImg = getGradientMap0(img, darkTobright, params.gradientSmoothParam, params.gradientEnhaParam);
 
-
 [B7, Y] = getSegBoundary(gradImg, imgPad, szimg, 1);
+
 % toc
 % fatten image and 7th boundary to make the next segmentation easier
 [fattenedImgPad, refpt] = fattenImg(imgPad, B7);

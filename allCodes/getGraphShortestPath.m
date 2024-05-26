@@ -1,7 +1,17 @@
 function [pathX, pathY]=getGraphShortestPath(adjMatrixW,imgPad,szimg)
 
 % get layer going from dark to light
-[~, path] = graphshortestpath( adjMatrixW, 1, numel(imgPad(:))); % find the path from node 1 to numel(img(:))
+% [~, path] = graphshortestpath( adjMatrixW, 1, numel(imgPad(:))); % find the path from node 1 to numel(img(:))
+% [pathX, pathY] = ind2sub(szimg, path);
+
+% Create the graph object
+G = graph(adjMatrixW, 'lower');
+
+% Find the shortest path from node 1 to node numel(imgPad(:))
+[startNode, endNode] = deal(1, numel(imgPad(:)));
+path = shortestpath(G, startNode, endNode);
+
+% Convert linear indices to subscripts
 [pathX, pathY] = ind2sub(szimg, path);
 
 % if ~isempty(path)
