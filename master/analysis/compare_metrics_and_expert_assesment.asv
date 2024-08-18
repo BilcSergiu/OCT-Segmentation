@@ -1,0 +1,97 @@
+function compare_metrics_and_expert_assesment(parentFolder)
+    % Define the subfolders
+    subfolders = {'Anisotropic', 'Wavelet', 'SplitBregmanROF'};
+    
+    % Read the parent folder data
+    parentFile = fullfile(parentFolder, 'quality-duminica-v2.csv');
+    parentData = readtable(parentFile);
+    
+    % Calculate the mean of each metric in the parent folder
+    % parentMeans = calculate_means(parentData);
+        
+
+    % Remove the 'Expert' column from parentData for comparison
+    parentDataNoExpert = parentData(:, 1:end-1);  % Assumes 'Expert' is the last column
+    
+    % Calculate the mean of each metric in the parent folder
+    parentMeans = calculate_means(parentDataNoExpert);
+    disp(parentMeans);
+    % Initialize structures to hold the differences and comparisons
+    differences = struct();
+    expertGroups = struct();
+    
+    % Loop over each subfolder
+    for i = 1:length(subfolders)
+        subfolder = subfolders{i};
+        subFile = fullfile(parentFolder, subfolder, 'quality-duminica-v2.csv');
+        subData = readtable(subFile);
+        
+        % Calculate the mean of each metric in the subfolder
+        subMeans = calculate_means(subData);
+        
+        % Compute the differences between subfolder means and parent folder means
+        differences.(subfolder) = subMeans - parentMeans;
+     
+        disp(subfolders{i});
+        disp(differences.(subfolder));
+        % Group the files based on the Expert assessments in the parent folder
+        expertGroups.(subfolder) = group_by_expert(parentData, subData);
+
+        disp('EXPERT');
+         disp(expertGroups.(subfolder));
+    end
+    
+    % Display the differences in detail
+    disp('Differences between means of metrics in subfolders compared to the parent folder:');
+    for i = 1:length(subfolders)
+        subfolder = subfolders{i};
+        disp(['--- ', subfolder, ' ---']);
+        disp(array2table(differences.(subfolder), 'VariableNames', parentMeans.Properties.VariableNames));
+    end
+    
+    % Display the expert-based comparisons in detail
+    disp('Expert-based comparisons:');
+    for i = 1:length(subfolders)
+        subfolder = subfolders{i};
+        disp(['--- ', subfolder, ' ---']);
+        expertStruct = expertGroups.(subfolder);
+        expertLevels = fieldnames(expertStruct);
+        for j = 1:length(expertLevels)
+            level = expertLevels{j};
+            disp(['Expert Level: ', num2str(level)]);
+            disp('Parent Means:');
+            disp(expertStruct.(level).ParentMeans);
+            disp('Subfolder Means:');
+            disp(expertStruct.(level).SubMeans);
+            disp('Diffenrece Means:');
+            disp(expertStruct.(level).SubMeans - );
+        end
+    end
+end
+
+function means = calculate_means(data)
+    % Calculate the mean of each column (excluding the ImageName column)
+    means = varfun(@mean, data(:, 2:end));
+end
+
+function groupedData = group_by_expert(parentData, subData)
+    % Extract the unique expert quality levels
+    expertLevels = unique(parentData.Expert);
+    
+    % Initialize a struct to hold grouped data
+    groupedData = struct();
+    
+    % Loop over each expert quality level
+    for i = 1:length(expertLevels)
+        level = expertLevels(i);
+        % Filter the parent and subData based on the expert level
+        filterIdx = parentData.Expert == level;
+        parentFiltered = parentData(filterIdx, :);
+        subFiltered = subData(filterIdx, :);
+        
+        % Calculate means for this group
+        groupedData.(sprintf('Expert_Level_%d', level)) = struct();
+        groupedData.(sprintf('Expert_Level_%d', level)).ParentMeans = calculate_means(parentFiltered);
+        groupedData.(sprintf('Expert_Level_%d', level)).SubMeans = calculate_means(subFiltered);
+    end
+end

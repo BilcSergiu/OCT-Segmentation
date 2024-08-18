@@ -41,11 +41,11 @@ algoMask = extractRetinaMask(img,params);
 % 
 % assert(differencePercentage < 0.03);
 
-% f = figure;
-% ax6 = axes(f);
-% montage({original, diff, manualMask, algoMask}); colormap('gray'); axis off; axis equal; hold on;
-% title(ax6,'Retina mask');
-% hold off;
+f = figure;
+ax6 = axes(f);
+montage({original, diff, manualMask, algoMask}); colormap('gray'); axis off; axis equal; hold on;
+title(ax6,'Retina mask');
+hold off;
 % %% Test number 2
 % 
 % params = struct();

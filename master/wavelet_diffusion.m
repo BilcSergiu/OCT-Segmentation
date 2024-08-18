@@ -14,8 +14,8 @@ function denoised_img = wavelet_diffusion(img, wavelet, level, K)
     cols = size(log_img, 2);
     padded_rows = ceil(rows / 2^level) * 2^level;
     padded_cols = ceil(cols / 2^level) * 2^level;
-    disp([size(log_img,1), size(log_img, 2), size(img,1), size(img, 2)])
-    disp([rows,padded_rows , cols,  padded_cols, padded_rows - rows, padded_cols - cols]);
+    % disp([size(log_img,1), size(log_img, 2), size(img,1), size(img, 2)])
+    % disp([rows,padded_rows , cols,  padded_cols, padded_rows - rows, padded_cols - cols]);
     padded_img = padarray(log_img, [padded_rows - rows, padded_cols - cols], 'symmetric', 'post');
 
     % Perform undecimated wavelet transform using MATLAB's Wavelet Toolbox

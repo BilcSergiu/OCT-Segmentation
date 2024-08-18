@@ -1,0 +1,151 @@
+function [SD, SS] = calculateSignalDeviation(imgPath)
+    % This function calculates the Signal Deviation (SD) of an OCT image.
+    % Input: 
+    %   octImage - The OCT image in grayscale (2D matrix)
+    % Output:
+    %   SD - The calculated Signal Deviation value
+
+    octImage = imread(imgPath);
+
+    if size(octImage, 3) == 3
+        octImage = rgb2gray(octImage);
+    end
+    % nOctImage = mat2gray(octImage);
+
+% Convert the image to binary using an adaptive threshold
+    % (The adaptive threshold step can be adjusted according to your needs)
+    binaryImage = imbinarize(octImage, 'adaptive', 'Sensitivity', 0.5);
+
+    % Find the number of A-scans (number of columns)
+    numAScans = size(binaryImage, 2);
+
+    % Initialize the array to store the number of signal pixels per A-scan
+    numSignalPixels = zeros(1, numAScans);
+
+    % Initialize variable to store the sum of signal pixel intensities
+    totalSignalIntensity = 0;
+
+    % Calculate the number of signal pixels in each A-scan (each column)
+    for i = 1:numAScans
+        numSignalPixels(i) = sum(binaryImage(:, i));
+        % Sum the intensity of the signal pixels for SS calculation
+        totalSignalIntensity = totalSignalIntensity + sum(octImage(binaryImage(:, i), i));
+    end
+
+    % Calculate the mean number of signal pixels per A-scan
+    meanSignalPixels = mean(numSignalPixels);
+
+    % Calculate the Signal Deviation (SD) as the standard deviation of the signal pixels
+    SD = sqrt(mean((numSignalPixels - meanSignalPixels).^2));
+
+    % Calculate Signal Strength (SS) as the average intensity of signal pixels
+    totalNumSignalPixels = sum(numSignalPixels);
+    if totalNumSignalPixels > 0
+        SS = totalSignalIntensity / totalNumSignalPixels;
+    else
+        SS = 0; % Handle the case where no signal pixels are found
+    end
+
+    % figure;
+    % imshow(filteredImg, []);
+    % title(['Signal Deviation (SD): ', num2str(SD)]);
+    disp(['SD: ', num2str(SD)]);
+    disp(['SS: ', num2str(SS)]);
+end
+
+
+% function binaryImage = localAdaptiveThreshold(octImage, windowSize)
+%     % Initialize the binary image
+%     binaryImage = false(size(octImage));
+% 
+%     % Pad the image to handle the edges
+%     paddedImage = padarray(octImage, [floor(windowSize/2), floor(windowSize/2)], 'replicate');
+% 
+%     % Get the dimensions of the image
+%     [rows, cols] = size(octImage);
+% 
+%     % Slide the window across the image
+%     for i = 1:rows
+%         for j = 1:cols
+%             % Extract the local window
+%             localWindow = paddedImage(i:i+windowSize-1, j:j+windowSize-1);
+% 
+%             % Compute the local threshold (mean of the local window)
+%             localThreshold = mean(localWindow(:));
+% 
+%             % Apply the threshold
+%             binaryImage(i, j) = octImage(i, j) > localThreshold;
+%         end
+%     end
+% end
+
+
+% function [SD, SS] = calculateSignalDeviation(imgPath, threshold_area)
+% 
+%     if nargin < 2
+%         threshold_area = 100;
+%     end
+% 
+%     % Step 1: Load and preprocess the image
+%     exact = imread(imgPath);
+% 
+%     if size(exact, 3) == 3
+%         exact = rgb2gray(exact);
+%     end
+%     normalized_image = mat2gray(exact);
+% 
+%     % Step 2: Automatic Signal ROI Detection using thresholding and region properties
+%     threshold_level = graythresh(normalized_image);
+%     min_intensity = min(normalized_image(:));
+%     adjusted_threshold = threshold_level * 0.8 + min_intensity * 0.2; % Weighted adjustment
+%     % disp(['Threshold Level: ', num2str(adjusted_threshold)]);
+%     binary_image = imbinarize(normalized_image, adjusted_threshold);
+% 
+%     % Remove small objects
+%     binary_image = bwareaopen(binary_image, threshold_area);
+% 
+%     % Label connected components
+%     labeled_image = logical(binary_image);
+% 
+%     % Measure properties of regions
+%     regions = regionprops(labeled_image, 'Area', 'PixelIdxList');
+% 
+% 
+% 
+%     % Assuming the largest non-background region as signal region
+%     [~, idx] = max([regions.Area]);
+%     signal_idx = regions(idx).PixelIdxList;
+%     signal_values = normalized_image(signal_idx);
+% 
+%      % Create a binary mask for the signal region
+%     binary_mask = false(size(normalized_image));
+%     binary_mask(signal_idx) = true;
+% 
+%     filteredImg = normalized_image .* binary_mask;
+% 
+%      % Now `binary_mask` is a binary image where the signal region is marked as 1 and the rest as 0.
+% 
+%     % Calculate the number of signal pixels in each A-scan (column of the image)
+%     NA = sum(binary_mask, 1); % Signal pixels count per column
+%     NB = size(binary_mask, 2); % Total number of A-scans (columns)
+%     NA_mean = mean(NA); % Mean number of signal pixels per A-scan
+% 
+%     % Calculate Signal Deviation (SD)
+%     SD = sqrt(sum((NA - NA_mean).^2) / NB);
+% 
+%      % Step 4: Calculate the Signal Strength
+% 
+%     % Signal strength is defined as the average intensity of the signal region
+%     SS = mean(exact(signal_idx));
+%     disp(exact(signal_idx));
+%     % % Display the result
+%     % fprintf('Signal Deviation (SD): %.4f\n', SD);
+%     % 
+%     % Visualization for human validation
+%     % figure;
+%     % imshow(filteredImg, []);
+%     % hold on;
+%     % [y, x] = ind2sub(size(binary_mask), find(binary_mask));
+%     % plot(x, y, 'r.', 'MarkerSize', 1);
+%     % title(['Signal Deviation (SD): ', num2str(SD)]);
+% end

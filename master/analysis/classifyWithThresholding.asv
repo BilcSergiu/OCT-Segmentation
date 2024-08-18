@@ -1,0 +1,121 @@
+function classifyWithThresholding(filename)
+    % Load the first 100 rows from the CSV file
+    data = readtable(filename);
+     % Filter out rows where the Expert column is empty
+    data = data(~ismissing(data.Expert), :);
+
+    % Convert Expert annotations to numeric values
+    expertNumeric = grp2idx(data.Expert); % 3=Excellent, 2=Good, 1=Bad
+    
+    % Initialize variables to store mean values, intervals, and accuracy
+    metrics = data.Properties.VariableNames(2:end-1); % excluding ImageName and Expert columns
+    
+    % Iterate through each metric
+    for i = 1:length(metrics)
+        metricName = metrics{i};
+        metricValues = data.(metricName);
+        
+        % Compute the mean value for each expert classification
+        meanExcellent = mean(metricValues(expertNumeric == 1));
+        meanGood = mean(metricValues(expertNumeric == 2));
+        meanBad = mean(metricValues(expertNumeric == 3));
+        
+        % Determine the best intervals for assessing quality
+        % We assume the threshold to classify as "Excellent", "Good", "Bad"
+        % will be selected based on maximizing accuracy
+        
+        % Generate possible thresholds
+        thresholds = linspace(min(metricValues), max(metricValues), 100);
+        
+        % Initialize variables to store the best intervals and their accuracy
+        bestIntervalExcellent = [0, 0];
+        bestIntervalGood = [0, 0];
+        bestIntervalBad = [0, 0];
+        bestIntervalOverall = [0, 0];
+        bestAccuracyExcellent = 0;
+        bestAccuracyGood = 0;
+        bestAccuracyBad = 0;
+        bestAccuracyOverall = 0;
+      
+        
+        % Iterate through pairs of thresholds to define intervals
+        for t1 = thresholds
+            for t2 = thresholds
+                if t1 < t2
+                    % Define intervals for "Excellent", "Good", "Bad"
+                    intervalExcellent = (metricValues > t1) & (metricValues <= t2);
+                    intervalGood = (metricValues > t1) & (metricValues <= t2);
+                    intervalBad = (metricValues > t1) & (metricValues <= t2);
+                    
+                    % Calculate accuracy for each interval
+                    accuracyExcellent = sum(intervalExcellent == (expertNumeric == 1)) / length(expertNumeric);
+                    accuracyGood = sum(intervalGood == (expertNumeric == 2)) / length(expertNumeric);
+                    accuracyBad = sum(intervalBad == (expertNumeric == 3)) / length(expertNumeric);
+                    
+                    % Compute overall accuracy
+                    totalPredictions = zeros(size(expertNumeric));
+                    totalPredictions(intervalExcellent) = 1; % Predict Excellent
+                    totalPredictions(intervalGood) = 2; % Predict Good
+                    totalPredictions(intervalBad) = 3; % Predict Bad
+                    overallAccuracy = sum(totalPredictions == expertNumeric) / length(expertNumeric);
+                    
+                    % Update the best intervals and their accuracy for each class
+                    if accuracyExcellent > bestAccuracyExcellent
+                        bestAccuracyExcellent = accuracyExcellent;
+                        bestIntervalExcellent = [t1, t2];
+                    end
+                    if accuracyGood > bestAccuracyGood
+                        bestAccuracyGood = accuracyGood;
+                        bestIntervalGood = [t1, t2];
+                    end
+                    if accuracyBad > bestAccuracyBad
+                        bestAccuracyBad = accuracyBad;
+                        bestIntervalBad = [t1, t2];
+                    end
+                    
+                    % Update the best interval for overall classification accuracy
+                    if overallAccuracy > bestAccuracyOverall
+                        bestAccuracyOverall = overallAccuracy;
+                        bestIntervalOverall = [t1, t2];
+                    end
+                end
+            end
+        end
+        
+        % Display the mean values
+        disp(['Metric: ', metricName]);
+        disp(['Mean Value for Excellent: ', num2str(meanExcellent)]);
+        disp(['Mean Value for Good: ', num2str(meanGood)]);
+        disp(['Mean Value for Bad: ', num2str(meanBad)]);
+        
+        % Display the best intervals and accuracy for each classification
+        disp(['Best Interval for Excellent: ', num2str(bestIntervalExcellent)]);
+        disp(['Best Accuracy for Excellent: ', num2str(bestAccuracyExcellent)]);
+        disp(['Best Interval for Good: ', num2str(bestIntervalGood)]);
+        disp(['Best Accuracy for Good: ', num2str(bestAccuracyGood)]);
+        disp(['Best Interval for Bad: ', num2str(bestIntervalBad)]);
+        disp(['Best Accuracy for Bad: ', num2str(bestAccuracyBad)]);
+        
+        % Display the best interval and overall accuracy
+        disp(['Best Interval for Overall Classification: ', num2str(bestIntervalOverall)]);
+        disp(['Best Overall Accuracy: ', num2str(bestAccuracyOverall)]);
+        disp('---');
+    end
+end
+
+
+
+
+function kappa = computeKappa(predictions, expertLabels)
+    % Confusion matrix
+    confMat = confusionmat(expertLabels, predictions);
+    
+    % Compute observed accuracy
+    po = sum(diag(confMat)) / sum(confMat(:));
+    
+    % Compute expected accuracy by chance
+    pe = sum(sum(confMat, 1) .* sum(confMat, 2)) / (sum(confMat(:))^2);
+    
+    % Compute Cohen's Kappa
+    kappa = (po - pe) / (1 - pe);
+end
