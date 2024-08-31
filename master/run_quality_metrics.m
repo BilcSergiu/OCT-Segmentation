@@ -1,7 +1,7 @@
 % Script to process all images in a directory and compute SNR_dB for each
 
 % Specify the directory containing the images
-imageDir = 'D:\Licenta\Datasets\OCTDL\OCTDL\DME\Wavelet\'; % Change this path to your directory
+imageDir = 'D:\Licenta\Datasets\OCTDL\OCTDL\VID\'; % Change this path to your directory
 
 % Get a list of all image files in the directory
 imageFiles = dir(fullfile(imageDir, '*.jpg')); % Assuming all images are .jpg, modify as needed
